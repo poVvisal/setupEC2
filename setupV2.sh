@@ -5,7 +5,7 @@
 
 # Exit immediately if any command fails, making the script safer.
 set -e
-cd ..
+
 # --- [STEP 1/5] PREPARING SERVER ENVIRONMENT ---
 echo "🚀 [1/5] Preparing the server environment..."
 
@@ -37,7 +37,7 @@ echo "🚀 [2/5] Cloning your Esport_Club project from GitHub..."
 # The URL of your repository.
 REPO_URL="https://github.com/poVvisal/Esport_Club.git"
 
-# Clone the project.
+# Clone the project in current directory
 git clone "$REPO_URL"
 
 # Navigate into the newly created project directory.
@@ -93,7 +93,7 @@ for dir in "${MICROSERVICES[@]}"; do
         # Create .env file with service-specific database
         cat > "$dir/.env" <<EOF
 # Database Configuration
-MONGODB_URI=mongodb+srv://visal2:123@dead-drop-db.shfcaup.mongodb.net/${dir,,}?retryWrites=true&w=majority&appName=dead-drop-db
+MONGODB_URI=mongodb+srv://user:password@dead-drop-db.shfcaup.mongodb.net/${dir,,}?retryWrites=true&w=majority&appName=dead-drop-db
 
 # Authentication
 JWT_SECRET=${SHARED_JWT_SECRET}
