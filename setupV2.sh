@@ -1,5 +1,7 @@
 set -euo pipefail
 
+#Get out of current directory!
+cd ..
 echo "🚀 [1/4] Preparing the server environment..."
 
 sudo apt update && sudo apt upgrade -y
