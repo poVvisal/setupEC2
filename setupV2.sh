@@ -53,7 +53,6 @@ echo "🚀 [3/5] Initializing and installing npm packages for each microservice.
 # An array holding the names of your service directories.
 MICROSERVICES=(
     "APIGateway_Microservice"
-    "Admin_Microservice"
     "Authentication_Microservice"
     "Coach_Microservice"
     "Player_Microservice"
