@@ -1,44 +1,57 @@
-set -euo pipefail
+#!/bin/bash
 
-#Get out of current directory!
+# This All-in-One script prepares a fresh Ubuntu server, clones the project
+# repository, and installs all system and application dependencies.
+
+# Exit immediately if any command fails, making the script safer.
+set -e
 cd ..
-echo "🚀 [1/4] Preparing the server environment..."
+# --- [STEP 1/5] PREPARING SERVER ENVIRONMENT ---
+echo "🚀 [1/5] Preparing the server environment..."
 
+# Update all existing server packages.
 sudo apt update && sudo apt upgrade -y
+
+# Install core tools: git, curl, and build-essential for compiling some packages.
 sudo apt install -y git curl build-essential
 
-echo "--> Installing Node.js LTS..."
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+# Install the latest Long-Term Support (LTS) version of Node.js.
+echo "--> Installing Node.js..."
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt install -y nodejs
 
+# Upgrade npm and install essential global packages like pm2.
 echo "--> Installing global Node.js tools (npm, pm2)..."
 sudo npm install -g npm@latest
 sudo npm install -g pm2
 
-echo "✅ Node.js version: $(node -v)"
-echo "✅ npm version: $(npm -v)"
+echo "✅ Environment setup is complete."
+echo "Node.js version: $(node -v)"
+echo "npm version: $(npm -v)"
 echo ""
 
-echo "🚀 [2/4] Installing MongoDB Community Edition..."
-sudo apt install -y mongodb
-sudo systemctl enable mongodb
-sudo systemctl start mongodb
-echo "✅ MongoDB status:"
-sudo systemctl status mongodb --no-pager
-echo ""
 
-echo "🚀 [3/4] Cloning your Esport_Club project from GitHub..."
+# --- [STEP 2/5] CLONING YOUR PROJECT REPOSITORY ---
+echo "🚀 [2/5] Cloning your Esport_Club project from GitHub..."
 
+# The URL of your repository.
 REPO_URL="https://github.com/poVvisal/Esport_Club.git"
+
+# Clone the project.
 git clone "$REPO_URL"
+
+# Navigate into the newly created project directory.
 cd Esport_Club/
 
 echo "✅ Project code has been cloned."
 echo ""
 
-echo "🚀 [4/4] Installing npm packages for each microservice..."
 
-SERVICES_DIRS=(
+# --- [STEP 3/5] INITIALIZING AND INSTALLING MICROSERVICE DEPENDENCIES ---
+echo "🚀 [3/5] Initializing and installing npm packages for each microservice..."
+
+# An array holding the names of your service directories.
+MICROSERVICES=(
     "APIGateway_Microservice"
     "Admin_Microservice"
     "Authentication_Microservice"
@@ -47,26 +60,58 @@ SERVICES_DIRS=(
     "Registration_Microservice"
 )
 
-for dir in "${SERVICES_DIRS[@]}"; do
+# Loop through each microservice directory
+for dir in "${MICROSERVICES[@]}"; do
     if [ -d "$dir" ]; then
-        echo "--> Installing dependencies for [$dir]..."
-        (cd "$dir" && npm install)
+        echo "--> Setting up [${dir}]..."
+        (cd "$dir" && {
+            # Initialize npm project with default settings
+            npm init -y
+            
+            # Install dependencies one by one as specified
+            npm install express
+            npm install jsonwebtoken
+            npm install dotenv
+            npm install mongoose
+        })
+        echo "--> ✅ [${dir}] setup complete"
+    else
+        echo "--> WARNING: Directory [${dir}] not found. Skipping."
     fi
 done
 
 echo ""
-echo "🚀 Creating sample .env files for each microservice..."
 
-for dir in "${SERVICES_DIRS[@]}"; do
+# --- [STEP 4/5] CREATING SAMPLE .ENV FILES ---
+echo "⬇️ [4/5] Creating sample .env files for each microservice..."
+
+# Generate one JWT secret for all services (shared authentication)
+SHARED_JWT_SECRET=$(openssl rand -base64 32)
+
+for dir in "${MICROSERVICES[@]}"; do
     if [ -d "$dir" ]; then
+        # Create .env file with service-specific database
         cat > "$dir/.env" <<EOF
-MONGODB_URI=mongodb://localhost:27017/${dir,,}
-JWT_SECRET=yourSuperSecretKey
+# Database Configuration
+MONGODB_URI=mongodb+srv://visal2:123@dead-drop-db.shfcaup.mongodb.net/${dir,,}?retryWrites=true&w=majority&appName=dead-drop-db
+
+# Authentication
+JWT_SECRET=${SHARED_JWT_SECRET}
+
+# Service Configuration
+NODE_ENV=development
 EOF
-        echo "--> Created .env for [${dir}]"
+        echo "--> Created .env for [${dir}] with shared JWT secret"
     fi
 done
 
 echo ""
 echo "✅✅✅ ALL-IN-ONE SETUP COMPLETE! ✅✅✅"
-echo "The server is fully prepared. You can now configure and launch the services with pm2."
+echo "The server is fully prepared with all dependencies including:"
+echo "  - Fresh npm initialization for each microservice"
+echo "  - Express.js framework for web server functionality"
+echo "  - JWT for authentication tokens (shared across services)"
+echo "  - dotenv for environment variable management"
+echo "  - Mongoose for MongoDB operations"
+echo "  - Clean .env files without port conflicts"
+echo "You can now configure and launch the services with pm2."
